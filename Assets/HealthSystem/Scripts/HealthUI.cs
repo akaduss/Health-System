@@ -35,7 +35,6 @@ public class HealthUI : MonoBehaviour
         {
             if (playerHealth != null)
             {
-                Debug.Log(playerHealth.CurrentHealth);
                 playerHealth.OnHealthChanged += UpdateUI;
                 UpdateUI(playerHealth.MaxHealth, playerHealth.MaxHealth);
             }

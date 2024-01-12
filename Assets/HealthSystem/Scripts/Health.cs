@@ -6,8 +6,8 @@ public class Health : MonoBehaviour, IDamageable, IHealable
     [SerializeField] private HealthConfig healthConfig;
     [SerializeField] private Renderer visualRenderer;
     [SerializeField] private bool showVisualFeedback = true;
+    [SerializeField] private float currentHealth;
 
-    private float currentHealth;
     private bool isInvulnerable = false;
 
     public float CurrentHealth => currentHealth;
@@ -21,6 +21,7 @@ public class Health : MonoBehaviour, IDamageable, IHealable
     private void Start()
     {
         currentHealth = healthConfig.maxHealth;
+        OnHealthChanged?.Invoke(currentHealth,MaxHealth);
 
         if (visualRenderer == null)
         {
