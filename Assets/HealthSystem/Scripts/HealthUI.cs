@@ -58,10 +58,12 @@ public class HealthUI : MonoBehaviour
         // Update the foreground bar size
         foregroundBar.rectTransform.sizeDelta = new Vector2(newWidth, foregroundBar.rectTransform.sizeDelta.y);
 
-        // Update the health text
+        // Update the health text with integer values
         if (healthText != null)
         {
-            healthText.text = $"{currentHealth} / {maxHealth}";
+            int roundedCurrentHealth = Mathf.RoundToInt(currentHealth);
+            int roundedMaxHealth = Mathf.RoundToInt(maxHealth);
+            healthText.text = $"{roundedCurrentHealth} / {roundedMaxHealth}";
         }
 
         // Update the bar color based on damage or healing

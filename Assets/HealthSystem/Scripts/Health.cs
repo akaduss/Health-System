@@ -1,12 +1,8 @@
+using System.Collections;
 using UnityEngine;
 
 public class Health : MonoBehaviour, IDamageable, IHealable
 {
-    #region test
-    public float damageAmount;
-    public float healAmount;
-    #endregion
-
     [SerializeField] private float maxHealth = 100f;
     [SerializeField] private float currentHealth;
 
@@ -33,15 +29,7 @@ public class Health : MonoBehaviour, IDamageable, IHealable
     [SerializeField] private float invulnerabilityDuration = 1f;
     private bool isInvulnerable = false;
 
-
     private void Start()
-    {
-        InitializeHealth();
-        InitializeVisualFeedback();
-        RegisterWithHealthManager();
-    }
-
-    private void Awake()
     {
         InitializeHealth();
         InitializeVisualFeedback();
@@ -153,5 +141,39 @@ public class Health : MonoBehaviour, IDamageable, IHealable
         {
             Destroy(gameObject);
         }
+    }
+
+    // Coroutine for damage over time
+    private IEnumerator DamageOverTime(float damageOverTimeInterval, float damagePerInterval, float duration)
+    {
+        float elapsedTime = 0f;
+        while (elapsedTime < duration)
+        {
+            TakeDamage(damagePerInterval);
+            yield return new WaitForSeconds(damageOverTimeInterval);
+            elapsedTime += damageOverTimeInterval;
+        }
+    }
+
+    // Coroutine for healing over time
+    private IEnumerator HealOverTime(float healOverTimeInterval, float healPerInterval, float duration)
+    {
+        float elapsedTime = 0f;
+        while (elapsedTime < duration)
+        {
+            Heal(healPerInterval);
+            yield return new WaitForSeconds(healOverTimeInterval);
+            elapsedTime += healOverTimeInterval;
+        }
+    }
+
+    public void StartDamageOverTime(float frequency, float damagePerInterval, float duration)
+    {
+        StartCoroutine(DamageOverTime(frequency, damagePerInterval, duration));
+    }
+
+    public void StartHealOverTime(float frequency, float healthPerInterval, float duration)
+    {
+        StartCoroutine(HealOverTime(frequency, healthPerInterval, duration));
     }
 }

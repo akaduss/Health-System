@@ -7,7 +7,6 @@ public class HealthManager : MonoBehaviour
 
     private Dictionary<GameObject, Health> _healthDictionary;
 
-    // Reference to the player's Health component
     [SerializeField] private Health _playerHealth;
 
     public Health PlayerHealth
@@ -66,5 +65,4 @@ public class HealthManager : MonoBehaviour
         }
     }
 
-    // Add more methods as needed based on your requirements
 }
