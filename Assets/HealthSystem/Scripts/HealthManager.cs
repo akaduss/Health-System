@@ -27,12 +27,6 @@ public class HealthManager : MonoBehaviour
         }
     }
 
-    // Set the player's Health component reference
-    public void SetPlayerHealth(Health playerHealth)
-    {
-        _playerHealth = playerHealth;
-    }
-
     public void RegisterHealth(Health health)
     {
         if (!_healthDictionary.ContainsKey(health.gameObject))
