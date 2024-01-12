@@ -14,7 +14,8 @@ public class HealthUI : MonoBehaviour
 
     private float maxWidth;
 
-    private Health healthComponent;
+    private HealthManager healthManager;
+    private Health playerHealth;
 
     private void Start()
     {
@@ -27,17 +28,16 @@ public class HealthUI : MonoBehaviour
         maxWidth = foregroundBar.rectTransform.sizeDelta.x;
 
         // Assuming there is a HealthManager in the scene
-        HealthManager healthManager = HealthManager.Instance;
+        healthManager = HealthManager.Instance;
+        playerHealth = healthManager.PlayerHealth;
 
         if (healthManager != null)
         {
-            // Assuming there is only one player with Health component
-            healthComponent = healthManager.PlayerHealth;
-
-            if (healthComponent != null)
+            if (playerHealth != null)
             {
-                healthComponent.OnHealthChanged += UpdateUI;
-                UpdateUI(healthComponent.CurrentHealth, healthComponent.MaxHealth);
+                Debug.Log(playerHealth.CurrentHealth);
+                playerHealth.OnHealthChanged += UpdateUI;
+                UpdateUI(playerHealth.MaxHealth, playerHealth.MaxHealth);
             }
             else
             {
@@ -74,7 +74,7 @@ public class HealthUI : MonoBehaviour
     {
         if (useCustomColors)
         {
-            Color barColor = healthComponent.CurrentHealth < healthComponent.MaxHealth ? damageColor : healColor;
+            Color barColor = playerHealth.CurrentHealth < playerHealth.MaxHealth ? damageColor : healColor;
             foregroundBar.color = barColor;
         }
     }
