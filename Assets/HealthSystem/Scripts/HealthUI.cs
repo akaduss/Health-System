@@ -1,37 +1,79 @@
-// HealthUI.cs
-
-using System.Diagnostics;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class HealthUI : MonoBehaviour
 {
-    public Health healthComponent;
-    public Text healthText;
+    [SerializeField] private Image foregroundBar;
+    [SerializeField] private TextMeshProUGUI healthText;
+
+    [Header("Optional Settings")]
+    [SerializeField] private bool useCustomColors = false;
+    [SerializeField] private Color damageColor = Color.red;
+    [SerializeField] private Color healColor = Color.green;
+
+    private float maxWidth;
+
+    private Health healthComponent;
 
     private void Start()
     {
-        if (healthComponent != null)
+        InitializeUI();
+    }
+
+    private void InitializeUI()
+    {
+        // Assuming the foregroundBar is a child of the health bar and fills it horizontally
+        maxWidth = foregroundBar.rectTransform.sizeDelta.x;
+
+        // Assuming there is a HealthManager in the scene
+        HealthManager healthManager = HealthManager.Instance;
+
+        if (healthManager != null)
         {
-            healthComponent.OnHealthChanged += UpdateHealthText;
-            UpdateHealthText(healthComponent.currentHealth, healthComponent.maxHealth);
+            // Assuming there is only one player with Health component
+            healthComponent = healthManager.PlayerHealth;
+
+            if (healthComponent != null)
+            {
+                healthComponent.OnHealthChanged += UpdateUI;
+                UpdateUI(healthComponent.CurrentHealth, healthComponent.MaxHealth);
+            }
+            else
+            {
+                Debug.LogError("Player Health component not found in the HealthManager.");
+            }
         }
         else
         {
-            Debug.LogWarning("Health component not assigned to HealthUI.");
+            Debug.LogError("HealthManager not found in the scene.");
         }
     }
 
-    private void UpdateHealthText(float newHealth, float maxHealth)
+    private void UpdateUI(float currentHealth, float maxHealth)
     {
-        healthText.text = $"Health: {newHealth}/{maxHealth}";
+        float healthPercentage = Mathf.Clamp01(currentHealth / maxHealth);
+        float newWidth = maxWidth * healthPercentage;
+
+        // Update the foreground bar size
+        foregroundBar.rectTransform.sizeDelta = new Vector2(newWidth, foregroundBar.rectTransform.sizeDelta.y);
+
+        // Update the health text
+        if (healthText != null)
+        {
+            healthText.text = $"{currentHealth} / {maxHealth}";
+        }
+
+        // Update the bar color based on damage or healing
+        UpdateBarColor();
     }
 
-    private void OnDestroy()
+    private void UpdateBarColor()
     {
-        if (healthComponent != null)
+        if (useCustomColors)
         {
-            healthComponent.OnHealthChanged -= UpdateHealthText;
+            Color barColor = healthComponent.CurrentHealth < healthComponent.MaxHealth ? damageColor : healColor;
+            foregroundBar.color = barColor;
         }
     }
 }

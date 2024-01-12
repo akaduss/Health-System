@@ -1,20 +1,26 @@
-// HealthManager.cs
-
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class HealthManager : MonoBehaviour
 {
-    private static HealthManager instance;
-    public static HealthManager Instance => instance;
+    public static HealthManager Instance { get; private set; }
 
-    private Dictionary<GameObject, Health> healthDictionary = new Dictionary<GameObject, Health>();
+    private Dictionary<GameObject, Health> _healthDictionary;
+
+    // Reference to the player's Health component
+    [SerializeField] private Health _playerHealth;
+
+    public Health PlayerHealth
+    {
+        get { return _playerHealth; }
+    }
 
     private void Awake()
     {
-        if (instance == null)
+        if (Instance == null)
         {
-            instance = this;
+            Instance = this;
+            _healthDictionary = new Dictionary<GameObject, Health>();
         }
         else
         {
@@ -22,28 +28,43 @@ public class HealthManager : MonoBehaviour
         }
     }
 
-    public void RegisterEntity(GameObject entity)
+    // Set the player's Health component reference
+    public void SetPlayerHealth(Health playerHealth)
     {
-        Health health = entity.GetComponent<Health>();
+        _playerHealth = playerHealth;
+    }
 
-        if (health != null && !healthDictionary.ContainsKey(entity))
+    public void RegisterHealth(Health health)
+    {
+        if (!_healthDictionary.ContainsKey(health.gameObject))
         {
-            healthDictionary.Add(entity, health);
-            health.OnHealthChanged += HandleHealthChanged;
+            _healthDictionary.Add(health.gameObject, health);
         }
     }
 
-    public void UnregisterEntity(GameObject entity)
+    public void UnregisterHealth(Health health)
     {
-        if (healthDictionary.ContainsKey(entity))
+        if (_healthDictionary.ContainsKey(health.gameObject))
         {
-            healthDictionary[entity].OnHealthChanged -= HandleHealthChanged;
-            healthDictionary.Remove(entity);
+            _healthDictionary.Remove(health.gameObject);
         }
     }
 
-    private void HandleHealthChanged(float newHealth, float maxHealth)
+    public void DamageObject(GameObject target, float damage)
     {
-        // Implement any global health change logic here
+        if (_healthDictionary.ContainsKey(target))
+        {
+            _healthDictionary[target].TakeDamage(damage);
+        }
     }
+
+    public void HealObject(GameObject target, float amount)
+    {
+        if (_healthDictionary.ContainsKey(target))
+        {
+            _healthDictionary[target].Heal(amount);
+        }
+    }
+
+    // Add more methods as needed based on your requirements
 }

@@ -1,30 +1,76 @@
-// Health.cs
-
 using UnityEngine;
 
 public class Health : MonoBehaviour, IDamageable, IHealable
 {
-    public float maxHealth = 100f;
-    private float currentHealth;
+    #region test
+    public float damageAmount;
+    public float healAmount;
+    #endregion
 
-    // Events for external systems to listen to
+    [SerializeField] private float maxHealth = 100f;
+    [SerializeField] private float currentHealth;
+
+    public float CurrentHealth
+    {
+        get { return currentHealth; }
+    }
+
+    public float MaxHealth
+    {
+        get { return maxHealth; }
+    }
+
     public delegate void HealthChangedDelegate(float newHealth, float maxHealth);
     public event HealthChangedDelegate OnHealthChanged;
 
-    private Renderer entityRenderer;
-    public Color damageColor = Color.red;
-    public Color healColor = Color.green;
-    public float feedbackDuration = 0.2f;
-    public float invulnerabilityDuration = 1f;
+    [Header("Visual Feedback")]
+    [SerializeField] private Renderer visualRenderer;
+    [SerializeField] private Color damageColor = Color.red;
+    [SerializeField] private Color healColor = Color.green;
+    [SerializeField] private float feedbackDuration = 0.2f;
+
+    [Header("Invulnerability")]
+    [SerializeField] private float invulnerabilityDuration = 1f;
     private bool isInvulnerable = false;
+
 
     private void Start()
     {
-        currentHealth = maxHealth;
+        InitializeHealth();
+        InitializeVisualFeedback();
+        RegisterWithHealthManager();
+    }
 
-        // Get the renderer component for visual feedback
-        entityRenderer = GetComponent<Renderer>();
-        if (entityRenderer == null)
+    private void Awake()
+    {
+        InitializeHealth();
+        InitializeVisualFeedback();
+        RegisterWithHealthManager();
+    }
+
+    private void OnDestroy()
+    {
+        UnregisterFromHealthManager();
+    }
+
+    private void RegisterWithHealthManager()
+    {
+        HealthManager.Instance.RegisterHealth(this);
+    }
+
+    private void UnregisterFromHealthManager()
+    {
+        HealthManager.Instance.UnregisterHealth(this);
+    }
+
+    private void InitializeHealth()
+    {
+        currentHealth = maxHealth;
+    }
+
+    private void InitializeVisualFeedback()
+    {
+        if (visualRenderer == null)
         {
             Debug.LogWarning("Renderer component not found. Visual feedback will not work.");
         }
@@ -32,18 +78,18 @@ public class Health : MonoBehaviour, IDamageable, IHealable
 
     private void ShowFeedback(Color color)
     {
-        if (entityRenderer != null)
+        if (visualRenderer != null)
         {
-            entityRenderer.material.color = color;
-            Invoke("ResetFeedback", feedbackDuration);
+            visualRenderer.material.color = color;
+            Invoke(nameof(ResetFeedback), feedbackDuration);
         }
     }
 
     private void ResetFeedback()
     {
-        if (entityRenderer != null)
+        if (visualRenderer != null)
         {
-            entityRenderer.material.color = Color.white;
+            visualRenderer.material.color = Color.white;
         }
     }
 
@@ -56,41 +102,56 @@ public class Health : MonoBehaviour, IDamageable, IHealable
     {
         if (!isInvulnerable)
         {
-            currentHealth -= damage;
-            currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
-
-            // Trigger the event when health changes
-            OnHealthChanged?.Invoke(currentHealth, maxHealth);
-
-            // Show visual feedback for damage
+            ApplyDamage(damage);
             ShowFeedback(damageColor);
+            SetInvulnerability();
+            CheckDeath();
+        }
+    }
 
-            // Set invulnerability
-            isInvulnerable = true;
-            Invoke("ResetInvulnerability", invulnerabilityDuration);
+    private void ApplyDamage(float damage)
+    {
+        currentHealth -= damage;
+        currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+    }
 
-            if (currentHealth == 0f)
-            {
-                Die();
-            }
+    private void SetInvulnerability()
+    {
+        isInvulnerable = true;
+        Invoke(nameof(ResetInvulnerability), invulnerabilityDuration);
+    }
+
+    private void CheckDeath()
+    {
+        if (currentHealth <= 0f)
+        {
+            HandleDeath();
         }
     }
 
     public void Heal(float amount)
     {
-        currentHealth += amount;
-        currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
-
-        // Trigger the event when health changes
-        OnHealthChanged?.Invoke(currentHealth, maxHealth);
-
-        // Show visual feedback for healing
+        ApplyHealing(amount);
         ShowFeedback(healColor);
     }
 
-    private void Die()
+    private void ApplyHealing(float amount)
     {
-        // Implement death logic here
-        Debug.Log($"{gameObject.name} has died.");
+        currentHealth += amount;
+        currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+    }
+
+    private void HandleDeath()
+    {
+        if (TryGetComponent<IDeathHandler>(out var deathHandler))
+        {
+            deathHandler.HandleDeath();
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 }
