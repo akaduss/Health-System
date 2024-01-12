@@ -46,13 +46,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 625c5855013bf4ea9be6755b8ac12c3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 100
-  currentHealth: 100
+  healthConfig: {fileID: 11400000, guid: 2babb2941a6524c9b99164e38ba75da9, type: 2}
   visualRenderer: {fileID: 8961593440048597071}
   damageColor: {r: 1, g: 0, b: 0, a: 1}
   healColor: {r: 0, g: 1, b: 0, a: 1}
-  feedbackDuration: 0.2
-  invulnerabilityDuration: 0.1
 --- !u!114 &3971243901533906937
 MonoBehaviour:
   m_ObjectHideFlags: 0

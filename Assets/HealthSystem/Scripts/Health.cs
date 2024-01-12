@@ -3,73 +3,44 @@ using UnityEngine;
 
 public class Health : MonoBehaviour, IDamageable, IHealable
 {
-    [SerializeField] private float maxHealth = 100f;
-    [SerializeField] private float currentHealth;
+    [SerializeField] private HealthConfig healthConfig;
+    [SerializeField] private Renderer visualRenderer;
+    [SerializeField] private bool showVisualFeedback = true;
 
-    public float CurrentHealth
-    {
-        get { return currentHealth; }
-    }
+    private float currentHealth;
+    private bool isInvulnerable = false;
 
-    public float MaxHealth
-    {
-        get { return maxHealth; }
-    }
+    public float CurrentHealth => currentHealth;
+    public float MaxHealth => healthConfig.maxHealth;
+    public Color DamageColor => healthConfig.damageColor;
+    public Color HealColor => healthConfig.healColor;
 
     public delegate void HealthChangedDelegate(float newHealth, float maxHealth);
     public event HealthChangedDelegate OnHealthChanged;
 
-    [Header("Visual Feedback")]
-    [SerializeField] private Renderer visualRenderer;
-    [SerializeField] private Color damageColor = Color.red;
-    [SerializeField] private Color healColor = Color.green;
-    [SerializeField] private float feedbackDuration = 0.2f;
-
-    [Header("Invulnerability")]
-    [SerializeField] private float invulnerabilityDuration = 1f;
-    private bool isInvulnerable = false;
-
     private void Start()
     {
-        InitializeHealth();
-        InitializeVisualFeedback();
-        RegisterWithHealthManager();
-    }
+        currentHealth = healthConfig.maxHealth;
 
-    private void OnDestroy()
-    {
-        UnregisterFromHealthManager();
-    }
-
-    private void RegisterWithHealthManager()
-    {
-        HealthManager.Instance.RegisterHealth(this);
-    }
-
-    private void UnregisterFromHealthManager()
-    {
-        HealthManager.Instance.UnregisterHealth(this);
-    }
-
-    private void InitializeHealth()
-    {
-        currentHealth = maxHealth;
-    }
-
-    private void InitializeVisualFeedback()
-    {
         if (visualRenderer == null)
         {
             Debug.LogWarning("Renderer component not found. Visual feedback will not work.");
         }
+
+        HealthManager.Instance.RegisterHealth(this);
     }
 
-    private void ShowFeedback(Color color)
+    private void OnDestroy()
     {
-        if (visualRenderer != null)
+        HealthManager.Instance.UnregisterHealth(this);
+    }
+
+    private void ShowFeedback(Color color, float duration)
+    {
+        if (visualRenderer != null && showVisualFeedback)
         {
             visualRenderer.material.color = color;
-            Invoke(nameof(ResetFeedback), feedbackDuration);
+            Invoke(nameof(ResetFeedback), duration);
         }
     }
 
@@ -91,7 +62,7 @@ public class Health : MonoBehaviour, IDamageable, IHealable
         if (!isInvulnerable)
         {
             ApplyDamage(damage);
-            ShowFeedback(damageColor);
+            ShowFeedback(DamageColor, healthConfig.damageFeedbackDuration);
             SetInvulnerability();
             CheckDeath();
         }
@@ -100,14 +71,14 @@ public class Health : MonoBehaviour, IDamageable, IHealable
     private void ApplyDamage(float damage)
     {
         currentHealth -= damage;
-        currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
-        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+        currentHealth = Mathf.Clamp(currentHealth, 0f, healthConfig.maxHealth);
+        OnHealthChanged?.Invoke(currentHealth, healthConfig.maxHealth);
     }
 
     private void SetInvulnerability()
     {
         isInvulnerable = true;
-        Invoke(nameof(ResetInvulnerability), invulnerabilityDuration);
+        Invoke(nameof(ResetInvulnerability), healthConfig.invulnerabilityDuration);
     }
 
     private void CheckDeath()
@@ -121,14 +92,14 @@ public class Health : MonoBehaviour, IDamageable, IHealable
     public void Heal(float amount)
     {
         ApplyHealing(amount);
-        ShowFeedback(healColor);
+        ShowFeedback(HealColor, healthConfig.healFeedbackDuration);
     }
 
     private void ApplyHealing(float amount)
     {
         currentHealth += amount;
-        currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
-        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+        currentHealth = Mathf.Clamp(currentHealth, 0f, healthConfig.maxHealth);
+        OnHealthChanged?.Invoke(currentHealth, healthConfig.maxHealth);
     }
 
     private void HandleDeath()
@@ -143,7 +114,6 @@ public class Health : MonoBehaviour, IDamageable, IHealable
         }
     }
 
-    // Coroutine for damage over time
     private IEnumerator DamageOverTime(float damageOverTimeInterval, float damagePerInterval, float duration)
     {
         float elapsedTime = 0f;
@@ -155,7 +125,6 @@ public class Health : MonoBehaviour, IDamageable, IHealable
         }
     }
 
-    // Coroutine for healing over time
     private IEnumerator HealOverTime(float healOverTimeInterval, float healPerInterval, float duration)
     {
         float elapsedTime = 0f;
@@ -175,5 +144,10 @@ public class Health : MonoBehaviour, IDamageable, IHealable
     public void StartHealOverTime(float frequency, float healthPerInterval, float duration)
     {
         StartCoroutine(HealOverTime(frequency, healthPerInterval, duration));
+    }
+
+    public void ToggleVisualFeedback(bool enable)
+    {
+        showVisualFeedback = enable;
     }
 }
