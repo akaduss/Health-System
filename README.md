@@ -2,3 +2,4 @@ Add Health to your player. Add HealthManager to a empty gameobject in your scene
 
 #TODO
 1) Add event system to canvas prefab
+2) Lower default Invulnerability of scriptableobject
