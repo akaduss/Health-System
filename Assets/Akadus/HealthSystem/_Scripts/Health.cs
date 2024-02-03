@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -15,25 +16,18 @@ public class Health : MonoBehaviour, IDamageable, IHealable
     public Color DamageColor => healthConfig.damageColor;
     public Color HealColor => healthConfig.healColor;
 
-    public delegate void HealthChangedDelegate(float newHealth, float maxHealth);
-    public event HealthChangedDelegate OnHealthChanged;
+    public event Action OnHealthChanged;
 
     private void Start()
     {
         currentHealth = healthConfig.maxHealth;
-        OnHealthChanged?.Invoke(currentHealth,MaxHealth);
+        OnHealthChanged?.Invoke();
 
         if (visualRenderer == null)
         {
             Debug.LogWarning("Renderer component not found. Visual feedback will not work.");
         }
 
-        HealthManager.Instance.RegisterHealth(this);
-    }
-
-    private void OnDestroy()
-    {
-        HealthManager.Instance.UnregisterHealth(this);
     }
 
     private void ShowFeedback(Color color, float duration)
@@ -73,7 +67,7 @@ public class Health : MonoBehaviour, IDamageable, IHealable
     {
         currentHealth -= damage;
         currentHealth = Mathf.Clamp(currentHealth, 0f, healthConfig.maxHealth);
-        OnHealthChanged?.Invoke(currentHealth, healthConfig.maxHealth);
+        OnHealthChanged?.Invoke();
     }
 
     private void SetInvulnerability()
@@ -100,7 +94,7 @@ public class Health : MonoBehaviour, IDamageable, IHealable
     {
         currentHealth += amount;
         currentHealth = Mathf.Clamp(currentHealth, 0f, healthConfig.maxHealth);
-        OnHealthChanged?.Invoke(currentHealth, healthConfig.maxHealth);
+        OnHealthChanged?.Invoke();
     }
 
     private void HandleDeath()
