@@ -1,3 +1,1 @@
-Add Health to your player. Add HealthManager to a empty gameobject in your scene. Reference player to your HealthManager.
-
-#TODO
+You can use prefabs to easily understand how it works. You can create your own health config
