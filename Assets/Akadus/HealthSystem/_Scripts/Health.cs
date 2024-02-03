@@ -2,147 +2,150 @@ using System;
 using System.Collections;
 using UnityEngine;
 
-public class Health : MonoBehaviour, IDamageable, IHealable
+namespace Akadus.HealthSystem
 {
-    [SerializeField] private HealthConfig healthConfig;
-    [SerializeField] private Renderer visualRenderer;
-    [SerializeField] private bool showVisualFeedback = true;
-    [SerializeField] private float currentHealth;
-
-    private bool isInvulnerable = false;
-
-    public float CurrentHealth => currentHealth;
-    public float MaxHealth => healthConfig.maxHealth;
-    public Color DamageColor => healthConfig.damageColor;
-    public Color HealColor => healthConfig.healColor;
-
-    public event Action OnHealthChanged;
-
-    private void Start()
+    public class Health : MonoBehaviour, IDamageable, IHealable
     {
-        currentHealth = healthConfig.maxHealth;
-        OnHealthChanged?.Invoke();
+        [SerializeField] private HealthConfig healthConfig;
+        [SerializeField] private Renderer visualRenderer;
+        [SerializeField] private bool showVisualFeedback = true;
+        [SerializeField] private float currentHealth;
 
-        if (visualRenderer == null)
+        private bool isInvulnerable = false;
+
+        public float CurrentHealth => currentHealth;
+        public float MaxHealth => healthConfig.maxHealth;
+        public Color DamageColor => healthConfig.damageColor;
+        public Color HealColor => healthConfig.healColor;
+
+        public event Action OnHealthChanged;
+
+        private void Start()
         {
-            Debug.LogWarning("Renderer component not found. Visual feedback will not work.");
+            currentHealth = healthConfig.maxHealth;
+            OnHealthChanged?.Invoke();
+
+            if (visualRenderer == null)
+            {
+                Debug.LogWarning("Renderer component not found. Visual feedback will not work.");
+            }
+
         }
 
-    }
-
-    private void ShowFeedback(Color color, float duration)
-    {
-        if (visualRenderer != null && showVisualFeedback)
+        private void ShowFeedback(Color color, float duration)
         {
-            visualRenderer.material.color = color;
-            Invoke(nameof(ResetFeedback), duration);
+            if (visualRenderer != null && showVisualFeedback)
+            {
+                visualRenderer.material.color = color;
+                Invoke(nameof(ResetFeedback), duration);
+            }
         }
-    }
 
-    private void ResetFeedback()
-    {
-        if (visualRenderer != null)
+        private void ResetFeedback()
         {
-            visualRenderer.material.color = Color.white;
+            if (visualRenderer != null)
+            {
+                visualRenderer.material.color = Color.white;
+            }
         }
-    }
 
-    private void ResetInvulnerability()
-    {
-        isInvulnerable = false;
-    }
-
-    public void TakeDamage(float damage)
-    {
-        if (!isInvulnerable)
+        private void ResetInvulnerability()
         {
-            ApplyDamage(damage);
-            ShowFeedback(DamageColor, healthConfig.damageFeedbackDuration);
-            SetInvulnerability();
-            CheckDeath();
+            isInvulnerable = false;
         }
-    }
 
-    private void ApplyDamage(float damage)
-    {
-        currentHealth -= damage;
-        currentHealth = Mathf.Clamp(currentHealth, 0f, healthConfig.maxHealth);
-        OnHealthChanged?.Invoke();
-    }
-
-    private void SetInvulnerability()
-    {
-        isInvulnerable = true;
-        Invoke(nameof(ResetInvulnerability), healthConfig.invulnerabilityDuration);
-    }
-
-    private void CheckDeath()
-    {
-        if (currentHealth <= 0f)
+        public void TakeDamage(float damage)
         {
-            HandleDeath();
+            if (!isInvulnerable)
+            {
+                ApplyDamage(damage);
+                ShowFeedback(DamageColor, healthConfig.damageFeedbackDuration);
+                SetInvulnerability();
+                CheckDeath();
+            }
         }
-    }
 
-    public void Heal(float amount)
-    {
-        ApplyHealing(amount);
-        ShowFeedback(HealColor, healthConfig.healFeedbackDuration);
-    }
-
-    private void ApplyHealing(float amount)
-    {
-        currentHealth += amount;
-        currentHealth = Mathf.Clamp(currentHealth, 0f, healthConfig.maxHealth);
-        OnHealthChanged?.Invoke();
-    }
-
-    private void HandleDeath()
-    {
-        if (TryGetComponent<IDeathHandler>(out var deathHandler))
+        private void ApplyDamage(float damage)
         {
-            deathHandler.HandleDeath();
+            currentHealth -= damage;
+            currentHealth = Mathf.Clamp(currentHealth, 0f, healthConfig.maxHealth);
+            OnHealthChanged?.Invoke();
         }
-        else
+
+        private void SetInvulnerability()
         {
-            Destroy(gameObject);
+            isInvulnerable = true;
+            Invoke(nameof(ResetInvulnerability), healthConfig.invulnerabilityDuration);
         }
-    }
 
-    private IEnumerator DamageOverTime(float damageOverTimeInterval, float damagePerInterval, float duration)
-    {
-        float elapsedTime = 0f;
-        while (elapsedTime < duration)
+        private void CheckDeath()
         {
-            TakeDamage(damagePerInterval);
-            yield return new WaitForSeconds(damageOverTimeInterval);
-            elapsedTime += damageOverTimeInterval;
+            if (currentHealth <= 0f)
+            {
+                HandleDeath();
+            }
         }
-    }
 
-    private IEnumerator HealOverTime(float healOverTimeInterval, float healPerInterval, float duration)
-    {
-        float elapsedTime = 0f;
-        while (elapsedTime < duration)
+        public void Heal(float amount)
         {
-            Heal(healPerInterval);
-            yield return new WaitForSeconds(healOverTimeInterval);
-            elapsedTime += healOverTimeInterval;
+            ApplyHealing(amount);
+            ShowFeedback(HealColor, healthConfig.healFeedbackDuration);
         }
-    }
 
-    public void StartDamageOverTime(float frequency, float damagePerInterval, float duration)
-    {
-        StartCoroutine(DamageOverTime(frequency, damagePerInterval, duration));
-    }
+        private void ApplyHealing(float amount)
+        {
+            currentHealth += amount;
+            currentHealth = Mathf.Clamp(currentHealth, 0f, healthConfig.maxHealth);
+            OnHealthChanged?.Invoke();
+        }
 
-    public void StartHealOverTime(float frequency, float healthPerInterval, float duration)
-    {
-        StartCoroutine(HealOverTime(frequency, healthPerInterval, duration));
-    }
+        private void HandleDeath()
+        {
+            if (TryGetComponent<IDeathHandler>(out var deathHandler))
+            {
+                deathHandler.HandleDeath();
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
+        }
 
-    public void ToggleVisualFeedback(bool enable)
-    {
-        showVisualFeedback = enable;
+        private IEnumerator DamageOverTime(float damageOverTimeInterval, float damagePerInterval, float duration)
+        {
+            float elapsedTime = 0f;
+            while (elapsedTime < duration)
+            {
+                TakeDamage(damagePerInterval);
+                yield return new WaitForSeconds(damageOverTimeInterval);
+                elapsedTime += damageOverTimeInterval;
+            }
+        }
+
+        private IEnumerator HealOverTime(float healOverTimeInterval, float healPerInterval, float duration)
+        {
+            float elapsedTime = 0f;
+            while (elapsedTime < duration)
+            {
+                Heal(healPerInterval);
+                yield return new WaitForSeconds(healOverTimeInterval);
+                elapsedTime += healOverTimeInterval;
+            }
+        }
+
+        public void StartDamageOverTime(float frequency, float damagePerInterval, float duration)
+        {
+            StartCoroutine(DamageOverTime(frequency, damagePerInterval, duration));
+        }
+
+        public void StartHealOverTime(float frequency, float healthPerInterval, float duration)
+        {
+            StartCoroutine(HealOverTime(frequency, healthPerInterval, duration));
+        }
+
+        public void ToggleVisualFeedback(bool enable)
+        {
+            showVisualFeedback = enable;
+        }
     }
 }

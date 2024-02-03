@@ -2,86 +2,86 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-public class HealthUI : MonoBehaviour
+
+namespace Akadus.HealthSystem
 {
-    private enum TextType
+    public class HealthUI : MonoBehaviour
     {
-        CurrentDivMax,
-        Current
-    }
-
-
-    [SerializeField] private Health _targetHealth;
-    [SerializeField] private Image _foregroundBar;
-    [SerializeField] private TextMeshProUGUI healthText;
-
-    [Header("Optional Settings")]
-    [SerializeField] private TextType _textType = TextType.CurrentDivMax;
-    [SerializeField] private bool useCustomColors = false;
-    [SerializeField] private Color damageColor = Color.red;
-    [SerializeField] private Color healColor = Color.green;
-
-    private float maxWidth;
-
-
-    private void Awake()
-    {
-        if(_targetHealth == null)
+        private enum TextType
         {
-            print("Health is not assigned");
+            CurrentDivMax,
+            Current
         }
-        if(_foregroundBar == null)
+
+        [SerializeField] private Health _targetHealth;
+        [SerializeField] private Image _foregroundBar;
+        [SerializeField] private TextMeshProUGUI healthText;
+
+        [Header("Optional Settings")]
+        [SerializeField] private TextType _textType = TextType.CurrentDivMax;
+        [SerializeField] private bool useCustomColors = false;
+        [SerializeField] private Color damageColor = Color.red;
+        [SerializeField] private Color healColor = Color.green;
+
+        private float maxWidth;
+
+
+        private void Awake()
         {
-            print("Healthbar fill is null");
-        }
-    }
-
-    private void Start()
-    {
-       
-
-        // Assuming the foregroundBar is a child of the health bar and fills it horizontally
-        maxWidth = _foregroundBar.rectTransform.sizeDelta.x;
-
-        _targetHealth.OnHealthChanged += UpdateUI;
-    }
-
-    private void UpdateUI()
-    {
-        
-        float healthPercentage = Mathf.Clamp01(_targetHealth.CurrentHealth / _targetHealth.MaxHealth);
-        float newWidth = maxWidth * healthPercentage;
-
-        // Update the foreground bar size
-        _foregroundBar.rectTransform.sizeDelta = new Vector2(newWidth, _foregroundBar.rectTransform.sizeDelta.y);
-
-        // Update the health text with integer values
-        if (healthText != null)
-        {
-            int roundedCurrentHealth = Mathf.RoundToInt(_targetHealth.CurrentHealth);
-            int roundedMaxHealth = Mathf.RoundToInt(_targetHealth.MaxHealth);
-
-
-            if(_textType == TextType.Current)
+            if (_targetHealth == null)
             {
-                healthText.text = $"{roundedCurrentHealth}";
+                print("Health is not assigned");
             }
-            else if(_textType == TextType.CurrentDivMax)
+            if (_foregroundBar == null)
             {
-                healthText.text = $"{roundedCurrentHealth} / {roundedMaxHealth}";
+                print("Healthbar fill is null");
             }
+            else
+            {
+                maxWidth = _foregroundBar.rectTransform.sizeDelta.x;
+            }
+
+            _targetHealth.OnHealthChanged += UpdateUI;
+
         }
 
-        // Update the bar color based on damage or healing
-        UpdateBarColor();
-    }
-
-    private void UpdateBarColor()
-    {
-        if (useCustomColors)
+        private void UpdateUI()
         {
-            Color barColor = _targetHealth.CurrentHealth < _targetHealth.MaxHealth ? damageColor : healColor;
-            _foregroundBar.color = barColor;
+
+            float healthPercentage = Mathf.Clamp01(_targetHealth.CurrentHealth / _targetHealth.MaxHealth);
+            float newWidth = maxWidth * healthPercentage;
+
+            // Update the foreground bar size
+            _foregroundBar.rectTransform.sizeDelta = new Vector2(newWidth, _foregroundBar.rectTransform.sizeDelta.y);
+
+            // Update the health text with integer values
+            if (healthText != null)
+            {
+                int roundedCurrentHealth = Mathf.RoundToInt(_targetHealth.CurrentHealth);
+                int roundedMaxHealth = Mathf.RoundToInt(_targetHealth.MaxHealth);
+
+
+                if (_textType == TextType.Current)
+                {
+                    healthText.text = $"{roundedCurrentHealth}";
+                }
+                else if (_textType == TextType.CurrentDivMax)
+                {
+                    healthText.text = $"{roundedCurrentHealth} / {roundedMaxHealth}";
+                }
+            }
+
+            // Update the bar color based on damage or healing
+            UpdateBarColor();
+        }
+
+        private void UpdateBarColor()
+        {
+            if (useCustomColors)
+            {
+                Color barColor = _targetHealth.CurrentHealth < _targetHealth.MaxHealth ? damageColor : healColor;
+                _foregroundBar.color = barColor;
+            }
         }
     }
 }
